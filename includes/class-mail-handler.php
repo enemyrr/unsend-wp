@@ -126,20 +126,29 @@ class UnsendWPMailer_MailHandler {
         }
         
         $api_key = sanitize_text_field($_POST['api_key']);
+        $api_endpoint = esc_url_raw($_POST['api_endpoint']);
+        
         if (empty($api_key)) {
             wp_send_json_error(__('API key is required', 'unsend-wp-mailer'));
         }
         
-        // Temporarily update the API key for testing
+        if (empty($api_endpoint)) {
+            wp_send_json_error(__('API endpoint is required', 'unsend-wp-mailer'));
+        }
+        
+        // Temporarily update the API settings for testing
         $original_key = get_option('unsend_api_key');
+        $original_endpoint = get_option('unsend_api_endpoint');
         update_option('unsend_api_key', $api_key);
+        update_option('unsend_api_endpoint', $api_endpoint);
         
         // Test the connection
         $api = UnsendWPMailer_API::get_instance();
         $result = $api->test_connection();
         
-        // Restore original API key
+        // Restore original API settings
         update_option('unsend_api_key', $original_key);
+        update_option('unsend_api_endpoint', $original_endpoint);
         
         if (is_wp_error($result)) {
             wp_send_json_error($result->get_error_message());

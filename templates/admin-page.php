@@ -247,9 +247,15 @@ jQuery(document).ready(function($) {
         var $button = $(this);
         var originalText = $button.text();
         var apiKey = $('#unsend_api_key').val();
+        var apiEndpoint = $('#unsend_api_endpoint').val();
         
         if (!apiKey) {
             showMessage('error', '<?php _e('Please enter an API key first.', 'unsend-wp-mailer'); ?>');
+            return;
+        }
+        
+        if (!apiEndpoint) {
+            showMessage('error', '<?php _e('Please enter an API endpoint.', 'unsend-wp-mailer'); ?>');
             return;
         }
         
@@ -258,6 +264,7 @@ jQuery(document).ready(function($) {
         $.post(ajaxurl, {
             action: 'unsend_test_connection',
             api_key: apiKey,
+            api_endpoint: apiEndpoint,
             nonce: '<?php echo wp_create_nonce('unsend_test_connection'); ?>'
         }, function(response) {
             if (response.success) {

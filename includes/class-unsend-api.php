@@ -13,7 +13,7 @@ class UnsendWPMailer_API {
     
     private static $instance = null;
     private $api_key;
-    private $api_url = 'https://app.unsend.dev/api/v1/emails';
+    private $api_url;
     
     public static function get_instance() {
         if (null === self::$instance) {
@@ -24,6 +24,7 @@ class UnsendWPMailer_API {
     
     private function __construct() {
         $this->api_key = get_option('unsend_api_key');
+        $this->api_url = get_option('unsend_api_endpoint', 'https://app.unsend.dev/api/v1/emails');
     }
     
     /**
