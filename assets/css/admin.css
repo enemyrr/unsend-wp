@@ -1,0 +1,377 @@
+/* Unsend WP Mailer Admin Styles */
+
+.unsend-wp-mailer-admin {
+    max-width: 1200px;
+}
+
+/* Tab Content */
+.tab-content {
+    display: none;
+    padding: 20px 0;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Info Box */
+.unsend-info-box {
+    background: #f9f9f9;
+    border: 1px solid #e5e5e5;
+    padding: 20px;
+    margin: 20px 0;
+    border-radius: 4px;
+}
+
+.unsend-info-box h3 {
+    margin-top: 0;
+    color: #333;
+}
+
+.unsend-info-box h4 {
+    color: #555;
+    margin-bottom: 10px;
+}
+
+.unsend-info-box ol {
+    padding-left: 20px;
+}
+
+.unsend-info-box li {
+    margin-bottom: 8px;
+}
+
+/* Logs Section */
+.logs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.logs-header h3 {
+    margin: 0;
+}
+
+.logs-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.logs-table-container {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.logs-table-container table {
+    margin: 0;
+}
+
+.logs-table-container th,
+.logs-table-container td {
+    padding: 12px;
+    text-align: left;
+}
+
+.logs-table-container th {
+    background: #f6f7f7;
+    font-weight: 600;
+    border-bottom: 1px solid #c3c4c7;
+}
+
+.no-logs {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+    padding: 40px !important;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-badge.status-sent {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.status-badge.status-failed {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.status-badge.status-pending {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+/* Test Email Section */
+.test-email-form {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.test-actions {
+    margin: 20px 0;
+    padding: 20px 0;
+    border-top: 1px solid #e5e5e5;
+}
+
+.test-actions .button {
+    margin-right: 10px;
+}
+
+.test-results {
+    margin-top: 20px;
+    padding: 20px 0;
+    border-top: 1px solid #e5e5e5;
+}
+
+.test-results.hidden {
+    display: none;
+}
+
+.test-results h4 {
+    margin-top: 0;
+    color: #333;
+}
+
+#test-output {
+    margin-top: 15px;
+}
+
+/* Statistics Section */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.stat-card {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card h4 {
+    margin: 0 0 10px 0;
+    color: #666;
+    font-size: 14px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-number {
+    font-size: 32px;
+    font-weight: 700;
+    color: #333;
+    line-height: 1;
+}
+
+.stat-number.success {
+    color: #28a745;
+}
+
+.stat-number.error {
+    color: #dc3545;
+}
+
+.stat-number.pending {
+    color: #ffc107;
+}
+
+/* Success Rate */
+.success-rate {
+    margin: 30px 0;
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.success-rate h4 {
+    margin: 0 0 15px 0;
+    color: #333;
+}
+
+.progress-bar {
+    position: relative;
+    height: 30px;
+    background: #e9ecef;
+    border-radius: 15px;
+    overflow: hidden;
+    border: 1px solid #c3c4c7;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+    transition: width 0.6s ease;
+    border-radius: 15px;
+}
+
+.progress-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-weight: 600;
+    color: #333;
+    z-index: 1;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .logs-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .logs-actions {
+        flex-wrap: wrap;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stat-number {
+        font-size: 24px;
+    }
+}
+
+/* Loading States */
+.button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Messages */
+#unsend-messages {
+    margin: 15px 0;
+}
+
+#unsend-messages .notice {
+    margin: 5px 0;
+}
+
+/* Form Improvements */
+.form-table th {
+    width: 200px;
+    padding: 20px 10px 20px 0;
+}
+
+.form-table td {
+    padding: 15px 10px;
+}
+
+.form-table input[type="text"],
+.form-table input[type="email"],
+.form-table input[type="password"] {
+    width: 100%;
+    max-width: 400px;
+}
+
+.form-table p.description {
+    margin-top: 5px;
+    font-style: italic;
+}
+
+/* Button Styling */
+.button-primary {
+    background: #0073aa;
+    border-color: #0073aa;
+    color: #fff;
+}
+
+.button-primary:hover {
+    background: #005a87;
+    border-color: #005a87;
+}
+
+.button-secondary {
+    background: #f6f7f7;
+    border-color: #c3c4c7;
+    color: #50575e;
+}
+
+.button-secondary:hover {
+    background: #f0f0f1;
+    border-color: #8c8f94;
+    color: #1d2327;
+}
+
+/* API Key Field */
+#unsend_api_key {
+    font-family: Monaco, 'Lucida Console', monospace;
+    letter-spacing: 1px;
+}
+
+/* Spacing */
+.unsend-wp-mailer-admin .form-table + .submit {
+    margin-top: 0;
+    padding-top: 0;
+}
+
+/* Accessibility */
+.screen-reader-text {
+    position: absolute !important;
+    clip: rect(1px, 1px, 1px, 1px);
+    word-wrap: normal !important;
+    overflow: hidden;
+    width: 1px;
+    height: 1px;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .unsend-info-box {
+        background: #1e1e1e;
+        border-color: #3c3c3c;
+        color: #e0e0e0;
+    }
+    
+    .stat-card,
+    .test-email-form,
+    .success-rate {
+        background: #1e1e1e;
+        border-color: #3c3c3c;
+        color: #e0e0e0;
+    }
+    
+    .logs-table-container {
+        border-color: #3c3c3c;
+    }
+    
+    .logs-table-container th {
+        background: #2c2c2c;
+        border-color: #3c3c3c;
+        color: #e0e0e0;
+    }
+    
+    .progress-bar {
+        background: #3c3c3c;
+        border-color: #555;
+    }
+} 
