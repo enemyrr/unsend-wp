@@ -38,6 +38,8 @@ class UnsendWPMailer_MailHandler {
         // Admin ajax handlers for testing
         add_action('wp_ajax_unsend_test_email', array($this, 'handle_test_email'));
         add_action('wp_ajax_unsend_test_connection', array($this, 'handle_test_connection'));
+        add_action('wp_ajax_unsend_toggle_stats', array($this, 'handle_toggle_stats'));
+        add_action('wp_ajax_unsend_clear_logs', array($this, 'handle_clear_logs'));
     }
     
     /**
@@ -98,16 +100,52 @@ class UnsendWPMailer_MailHandler {
             wp_send_json_error(__('Invalid email address', 'unsend-wp-mailer'));
         }
         
-        // Send test email
+        // Check if API is configured
+        $api_key = get_option('unsend_api_key');
+        $api_endpoint = get_option('unsend_api_endpoint');
+        
+        if (empty($api_key)) {
+            wp_send_json_error(__('Unsend API key is not configured. Please configure it in the settings.', 'unsend-wp-mailer'));
+        }
+        
+        if (empty($api_endpoint)) {
+            wp_send_json_error(__('Unsend API endpoint is not configured. Please configure it in the settings.', 'unsend-wp-mailer'));
+        }
+        
+        // Prepare test email data
+        $from_email = get_option('unsend_from_email', get_option('admin_email'));
+        $from_name = get_option('unsend_from_name', get_bloginfo('name'));
+        $from = $from_name ? "$from_name <$from_email>" : $from_email;
+        
         $subject = __('Test Email from Unsend WP Mailer', 'unsend-wp-mailer');
         $message = __('This is a test email to verify that Unsend WP Mailer is working correctly. If you receive this email, the configuration is successful.', 'unsend-wp-mailer');
         
-        $result = wp_mail($to_email, $subject, $message);
+        // Prepare email data for Unsend API (force direct API call)
+        $email_data = array(
+            'to' => $to_email,
+            'from' => $from,
+            'subject' => $subject,
+            'text' => $message // Use text instead of message for plain text content
+        );
         
-        if ($result) {
-            wp_send_json_success(__('Test email sent successfully!', 'unsend-wp-mailer'));
+        // Send directly via Unsend API, bypassing WordPress mail system
+        $api = UnsendWPMailer_API::get_instance();
+        $result = $api->send_email($email_data);
+        
+        if (is_wp_error($result)) {
+            wp_send_json_error(sprintf(
+                __('Failed to send test email via Unsend API: %s', 'unsend-wp-mailer'),
+                $result->get_error_message()
+            ));
         } else {
-            wp_send_json_error(__('Failed to send test email. Please check your configuration.', 'unsend-wp-mailer'));
+            $email_id = isset($result['data']['emailId']) ? $result['data']['emailId'] : '';
+            $success_message = __('Test email sent successfully via Unsend API!', 'unsend-wp-mailer');
+            
+            if ($email_id) {
+                $success_message .= ' ' . sprintf(__('Email ID: %s', 'unsend-wp-mailer'), $email_id);
+            }
+            
+            wp_send_json_success($success_message);
         }
     }
     
@@ -155,6 +193,26 @@ class UnsendWPMailer_MailHandler {
         } else {
             wp_send_json_success(__('Connection test successful!', 'unsend-wp-mailer'));
         }
+    }
+    
+    /**
+     * Handle statistics toggle AJAX request
+     */
+    public function handle_toggle_stats() {
+        // Verify nonce
+        if (!wp_verify_nonce($_POST['nonce'], 'unsend_toggle_stats')) {
+            wp_die(__('Security check failed', 'unsend-wp-mailer'));
+        }
+        
+        // Check permissions
+        if (!current_user_can('manage_options')) {
+            wp_die(__('Insufficient permissions', 'unsend-wp-mailer'));
+        }
+        
+        $show = isset($_POST['show']) ? (bool) $_POST['show'] : false;
+        update_option('unsend_show_stats', $show);
+        
+        wp_send_json_success();
     }
     
     /**
@@ -317,5 +375,79 @@ class UnsendWPMailer_MailHandler {
         }
         
         return $csv;
+    }
+    
+    /**
+     * Get paginated email logs
+     * 
+     * @param int $per_page Number of logs per page
+     * @param int $offset Offset for pagination
+     * @return array Email logs
+     */
+    public function get_paginated_logs($per_page = 20, $offset = 0) {
+        if (!get_option('unsend_enable_logging')) {
+            return array();
+        }
+        
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'unsend_email_logs';
+        
+        $logs = $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM $table_name ORDER BY created_at DESC LIMIT %d OFFSET %d",
+            $per_page,
+            $offset
+        ));
+        
+        return $logs;
+    }
+    
+    /**
+     * Get total number of email logs
+     * 
+     * @return int Total number of logs
+     */
+    public function get_total_logs() {
+        if (!get_option('unsend_enable_logging')) {
+            return 0;
+        }
+        
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'unsend_email_logs';
+        
+        return (int) $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
+    }
+    
+    /**
+     * Handle clear logs AJAX request
+     */
+    public function handle_clear_logs() {
+        // Verify nonce
+        if (!wp_verify_nonce($_POST['nonce'], 'unsend_clear_logs')) {
+            wp_send_json_error(__('Security check failed', 'unsend-wp-mailer'));
+        }
+        
+        // Check permissions
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error(__('Insufficient permissions', 'unsend-wp-mailer'));
+        }
+        
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'unsend_email_logs';
+        
+        // Attempt to truncate the table
+        $result = $wpdb->query("TRUNCATE TABLE $table_name");
+        
+        if ($result !== false) {
+            wp_send_json_success(__('Email logs cleared successfully', 'unsend-wp-mailer'));
+        } else {
+            // If TRUNCATE fails, try DELETE
+            $result = $wpdb->query("DELETE FROM $table_name");
+            
+            if ($result !== false) {
+                wp_send_json_success(__('Email logs cleared successfully', 'unsend-wp-mailer'));
+            } else {
+                wp_send_json_error(__('Failed to clear email logs', 'unsend-wp-mailer'));
+            }
+        }
     }
 } 

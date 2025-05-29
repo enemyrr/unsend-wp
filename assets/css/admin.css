@@ -157,47 +157,39 @@
 
 /* Statistics Section */
 .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-    margin: 20px 0;
-}
-
-.stat-card {
     background: #fff;
-    border: 1px solid #c3c4c7;
-    border-radius: 8px;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
     padding: 20px;
-    text-align: center;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
 }
 
-.stat-card h4 {
-    margin: 0 0 10px 0;
+.stats-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.stats-content {
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+}
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.stat-label {
+    font-weight: 600;
+    color: #23282d;
+}
+
+.stat-value {
     color: #666;
-    font-size: 14px;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.stat-number {
-    font-size: 32px;
-    font-weight: 700;
-    color: #333;
-    line-height: 1;
-}
-
-.stat-number.success {
-    color: #28a745;
-}
-
-.stat-number.error {
-    color: #dc3545;
-}
-
-.stat-number.pending {
-    color: #ffc107;
 }
 
 /* Success Rate */
@@ -373,5 +365,173 @@
     .progress-bar {
         background: #3c3c3c;
         border-color: #555;
+    }
+}
+
+/* Modal Styling */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 99999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 800px;
+    border-radius: 4px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+#email-details-content {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 4px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    font-family: monospace;
+}
+
+/* Pagination Styling */
+.tablenav-pages {
+    float: right;
+    margin: 15px 0;
+}
+
+.tablenav-pages .page-numbers {
+    display: inline-block;
+    min-width: 30px;
+    height: 30px;
+    margin: 0 5px;
+    padding: 0 4px;
+    font-size: 13px;
+    line-height: 28px;
+    text-align: center;
+    text-decoration: none;
+    color: #646970;
+    border: 1px solid #dcdcde;
+    background: #f6f7f7;
+    cursor: pointer;
+    border-radius: 3px;
+}
+
+.tablenav-pages .page-numbers.current {
+    border-color: #646970;
+    color: #fff;
+    background: #646970;
+}
+
+.tablenav-pages .page-numbers:hover {
+    border-color: #50575e;
+    color: #50575e;
+    background: #f0f0f1;
+}
+
+.tablenav-pages .page-numbers.current:hover {
+    border-color: #646970;
+    color: #fff;
+    background: #646970;
+}
+
+/* View Details Button */
+.view-details {
+    min-width: 100px;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+.status-sent {
+    background-color: #dff0d8;
+    color: #3c763d;
+}
+
+.status-failed {
+    background-color: #f2dede;
+    color: #a94442;
+}
+
+.status-pending {
+    background-color: #fcf8e3;
+    color: #8a6d3b;
+}
+
+.code-block {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    margin-top: 15px;
+}
+
+.code-block pre {
+    margin: 0;
+    padding: 15px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.code-block code {
+    display: block;
+    color: #333;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .modal-content {
+        background-color: #1e1e1e;
+        border-color: #3c3c3c;
+        color: #e0e0e0;
+    }
+
+    .code-block {
+        background: #2c2c2c;
+        border-color: #3c3c3c;
+    }
+
+    .code-block code {
+        color: #e0e0e0;
+    }
+
+    .close {
+        color: #e0e0e0;
+    }
+
+    .close:hover,
+    .close:focus {
+        color: #fff;
     }
 } 

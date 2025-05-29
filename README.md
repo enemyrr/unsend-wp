@@ -54,7 +54,7 @@ git clone https://github.com/your-username/unsend-wp-mailer.git
 2. Enter your **Unsend API Key**
 3. Configure your **From Email** (should be a verified domain in Unsend)
 4. Set your **From Name**
-5. **Test the connection** using the built-in test feature
+5. **Test the connection** using the built-in test feature (always uses Unsend API directly, regardless of override settings)
 6. Enable **Email Override** when you're ready to go live
 
 ### 3. Recommended Settings
@@ -163,6 +163,7 @@ The plugin includes comprehensive error handling:
 2. **Verify Domain**: Your from email domain should be verified in Unsend
 3. **Enable Logging**: Check logs for specific error messages
 4. **Test Connection**: Use the built-in connection test
+5. **Use Test Email**: The Test Email feature always bypasses WordPress mail and uses Unsend directly - perfect for testing your configuration independently
 
 #### Configuration Problems
 

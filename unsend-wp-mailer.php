@@ -3,9 +3,11 @@
  * Plugin Name: Unsend WP Mailer
  * Plugin URI: https://github.com/ribban-co/unsend-wp-mailer
  * Description: A WordPress plugin that overrides the default mail system with Unsend API for reliable email delivery.
- * Version: 0.1.11
+ * Version: 0.1.12
  * Author: RIBBAN
  * Author URI: https://ribban.co
+ * Requires at least: 6.4
+ * Requires PHP: 8.0
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: unsend-wp-mailer
@@ -17,7 +19,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('UNSEND_WP_MAILER_VERSION', '0.1.11');
+define('UNSEND_WP_MAILER_VERSION', '0.1.12');
 define('UNSEND_WP_MAILER_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('UNSEND_WP_MAILER_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('UNSEND_WP_MAILER_PLUGIN_FILE', __FILE__);

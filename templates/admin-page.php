@@ -75,7 +75,7 @@ if (!empty($validation_errors)) {
                     <li><?php _e('Sign up for an Unsend account and get your API key.', 'unsend-wp-mailer'); ?></li>
                     <li><?php _e('Enter your API key in the configuration above.', 'unsend-wp-mailer'); ?></li>
                     <li><?php _e('Configure your default from email and name.', 'unsend-wp-mailer'); ?></li>
-                    <li><?php _e('Test the connection using the Test Email tab.', 'unsend-wp-mailer'); ?></li>
+                    <li><?php _e('Test the connection using the Test Email tab (works independently of override settings).', 'unsend-wp-mailer'); ?></li>
                     <li><?php _e('Enable email override to start using Unsend for all WordPress emails.', 'unsend-wp-mailer'); ?></li>
                 </ol>
                 
@@ -105,6 +105,18 @@ if (!empty($validation_errors)) {
             </div>
             
             <?php if (get_option('unsend_enable_logging')): ?>
+                <?php
+                // Get pagination parameters
+                $per_page = 20;
+                $current_page = isset($_GET['log_page']) ? max(1, intval($_GET['log_page'])) : 1;
+                $offset = ($current_page - 1) * $per_page;
+                
+                // Get paginated logs
+                $logs = $mail_handler->get_paginated_logs($per_page, $offset);
+                $total_logs = $mail_handler->get_total_logs();
+                $total_pages = ceil($total_logs / $per_page);
+                ?>
+                
                 <div class="logs-table-container">
                     <table class="wp-list-table widefat fixed striped">
                         <thead>
@@ -113,12 +125,12 @@ if (!empty($validation_errors)) {
                                 <th><?php _e('To', 'unsend-wp-mailer'); ?></th>
                                 <th><?php _e('Subject', 'unsend-wp-mailer'); ?></th>
                                 <th><?php _e('Status', 'unsend-wp-mailer'); ?></th>
-                                <th><?php _e('Email ID', 'unsend-wp-mailer'); ?></th>
+                                <th><?php _e('Details', 'unsend-wp-mailer'); ?></th>
                             </tr>
                         </thead>
                         <tbody id="logs-table-body">
-                            <?php if (!empty($recent_logs)): ?>
-                                <?php foreach ($recent_logs as $log): ?>
+                            <?php if (!empty($logs)): ?>
+                                <?php foreach ($logs as $log): ?>
                                     <tr>
                                         <td><?php echo esc_html(date('Y-m-d H:i:s', strtotime($log->created_at))); ?></td>
                                         <td><?php echo esc_html($log->to_email); ?></td>
@@ -128,7 +140,22 @@ if (!empty($validation_errors)) {
                                                 <?php echo esc_html($log->status); ?>
                                             </span>
                                         </td>
-                                        <td><?php echo esc_html($log->email_id); ?></td>
+                                        <td>
+                                            <button type="button" class="button button-small view-details" 
+                                                    data-log='<?php echo esc_attr(json_encode([
+                                                        'id' => $log->id,
+                                                        'email_id' => $log->email_id,
+                                                        'to' => $log->to_email,
+                                                        'from' => $log->from_email,
+                                                        'subject' => $log->subject,
+                                                        'status' => $log->status,
+                                                        'response' => json_decode($log->response, true),
+                                                        'created_at' => $log->created_at,
+                                                        'updated_at' => $log->updated_at
+                                                    ])); ?>'>
+                                                <?php _e('View Details', 'unsend-wp-mailer'); ?>
+                                            </button>
+                                        </td>
                                     </tr>
                                 <?php endforeach; ?>
                             <?php else: ?>
@@ -138,6 +165,45 @@ if (!empty($validation_errors)) {
                             <?php endif; ?>
                         </tbody>
                     </table>
+                    
+                    <?php if ($total_pages > 1): ?>
+                    <div class="tablenav">
+                        <div class="tablenav-pages">
+                            <span class="displaying-num">
+                                <?php printf(_n('%s item', '%s items', $total_logs, 'unsend-wp-mailer'), number_format_i18n($total_logs)); ?>
+                            </span>
+                            
+                            <span class="pagination-links">
+                                <?php
+                                $page_links = paginate_links(array(
+                                    'base' => add_query_arg('log_page', '%#%'),
+                                    'format' => '',
+                                    'prev_text' => __('&laquo;'),
+                                    'next_text' => __('&raquo;'),
+                                    'total' => $total_pages,
+                                    'current' => $current_page,
+                                    'type' => 'array'
+                                ));
+                                
+                                if ($page_links) {
+                                    echo '<span class="page-numbers">' . implode('</span><span class="page-numbers">', $page_links) . '</span>';
+                                }
+                                ?>
+                            </span>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                </div>
+                
+                <!-- Email Details Modal -->
+                <div id="email-details-modal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <span class="close">&times;</span>
+                        <h3><?php _e('Email Details', 'unsend-wp-mailer'); ?></h3>
+                        <div class="code-block">
+                            <pre><code id="email-details-content"></code></pre>
+                        </div>
+                    </div>
                 </div>
             <?php else: ?>
                 <div class="notice notice-info">
@@ -149,6 +215,12 @@ if (!empty($validation_errors)) {
         <!-- Test Email Tab -->
         <div id="tab-test" class="tab-content">
             <h3><?php _e('Test Email Functionality', 'unsend-wp-mailer'); ?></h3>
+            
+            <div class="test-email-notice">
+                <div class="notice notice-info inline">
+                    <p><?php _e('<strong>Note:</strong> Test emails are sent directly through the Unsend API, bypassing WordPress\'s email system, even if email override is disabled. This ensures you can test your Unsend configuration independently.', 'unsend-wp-mailer'); ?></p>
+                </div>
+            </div>
             
             <div class="test-email-form">
                 <table class="form-table">
@@ -184,38 +256,42 @@ if (!empty($validation_errors)) {
             <h3><?php _e('Email Statistics', 'unsend-wp-mailer'); ?></h3>
             
             <?php if (get_option('unsend_enable_logging')): ?>
+                <?php 
+                $show_stats = get_option('unsend_show_stats', true);
+                if ($show_stats): 
+                ?>
                 <div class="stats-grid">
-                    <div class="stat-card">
-                        <h4><?php _e('Total Emails', 'unsend-wp-mailer'); ?></h4>
-                        <div class="stat-number"><?php echo esc_html($stats['total']); ?></div>
+                    <div class="stats-header">
+                        <h4><?php _e('Email Statistics Overview', 'unsend-wp-mailer'); ?></h4>
                     </div>
                     
-                    <div class="stat-card">
-                        <h4><?php _e('Successfully Sent', 'unsend-wp-mailer'); ?></h4>
-                        <div class="stat-number success"><?php echo esc_html($stats['sent']); ?></div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <h4><?php _e('Failed', 'unsend-wp-mailer'); ?></h4>
-                        <div class="stat-number error"><?php echo esc_html($stats['failed']); ?></div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <h4><?php _e('Pending', 'unsend-wp-mailer'); ?></h4>
-                        <div class="stat-number pending"><?php echo esc_html($stats['pending']); ?></div>
+                    <div class="stats-content">
+                        <div class="stat-row">
+                            <span class="stat-label"><?php _e('Total Processed', 'unsend-wp-mailer'); ?></span>
+                            <span class="stat-value"><?php echo esc_html($stats['total']); ?> <?php _e('emails', 'unsend-wp-mailer'); ?></span>
+                        </div>
+                        
+                        <div class="stat-row">
+                            <span class="stat-label"><?php _e('Delivery Status', 'unsend-wp-mailer'); ?></span>
+                            <span class="stat-value">
+                                <?php echo esc_html($stats['sent']); ?> <?php _e('delivered', 'unsend-wp-mailer'); ?> | 
+                                <?php echo esc_html($stats['pending']); ?> <?php _e('in progress', 'unsend-wp-mailer'); ?> | 
+                                <?php echo esc_html($stats['failed']); ?> <?php _e('undelivered', 'unsend-wp-mailer'); ?>
+                            </span>
+                        </div>
+                        
+                        <div class="stat-row">
+                            <span class="stat-label"><?php _e('Success Rate', 'unsend-wp-mailer'); ?></span>
+                            <span class="stat-value">
+                                <?php
+                                $success_rate = $stats['total'] > 0 ? round(($stats['sent'] / $stats['total']) * 100, 2) : 0;
+                                echo esc_html($success_rate) . '%';
+                                ?>
+                            </span>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="success-rate">
-                    <h4><?php _e('Success Rate', 'unsend-wp-mailer'); ?></h4>
-                    <div class="progress-bar">
-                        <?php
-                        $success_rate = $stats['total'] > 0 ? round(($stats['sent'] / $stats['total']) * 100, 2) : 0;
-                        ?>
-                        <div class="progress-fill" style="width: <?php echo esc_attr($success_rate); ?>%"></div>
-                        <span class="progress-text"><?php echo esc_html($success_rate); ?>%</span>
-                    </div>
-                </div>
+                <?php endif; ?>
             <?php else: ?>
                 <div class="notice notice-info">
                     <p><?php _e('Email logging is disabled. Enable it in the settings to view statistics.', 'unsend-wp-mailer'); ?></p>
@@ -308,9 +384,26 @@ jQuery(document).ready(function($) {
     
     // Clear logs
     $('#clear-logs').on('click', function() {
+        var $button = $(this);
         if (confirm('<?php _e('Are you sure you want to clear all email logs?', 'unsend-wp-mailer'); ?>')) {
-            // Implementation for clearing logs
-            location.reload();
+            $button.text('<?php _e('Clearing...', 'unsend-wp-mailer'); ?>').prop('disabled', true);
+            
+            $.post(ajaxurl, {
+                action: 'unsend_clear_logs',
+                nonce: '<?php echo wp_create_nonce('unsend_clear_logs'); ?>'
+            }, function(response) {
+                if (response.success) {
+                    showMessage('success', response.data);
+                    // Refresh the logs table
+                    location.reload();
+                } else {
+                    showMessage('error', response.data);
+                    $button.text('<?php _e('Clear Logs', 'unsend-wp-mailer'); ?>').prop('disabled', false);
+                }
+            }).fail(function() {
+                showMessage('error', '<?php _e('Failed to clear logs. Please try again.', 'unsend-wp-mailer'); ?>');
+                $button.text('<?php _e('Clear Logs', 'unsend-wp-mailer'); ?>').prop('disabled', false);
+            });
         }
     });
     
@@ -319,6 +412,26 @@ jQuery(document).ready(function($) {
         window.location.href = ajaxurl + '?action=unsend_export_logs&nonce=' + '<?php echo wp_create_nonce('unsend_export_logs'); ?>';
     });
     
+    // View email details
+    $('.view-details').on('click', function() {
+        var logData = $(this).data('log');
+        var formattedJson = JSON.stringify(logData, null, 2);
+        $('#email-details-content').text(formattedJson);
+        $('#email-details-modal').show();
+    });
+
+    // Close modal
+    $('.modal .close').on('click', function() {
+        $('#email-details-modal').hide();
+    });
+
+    // Close modal when clicking outside
+    $(window).on('click', function(event) {
+        if ($(event.target).is('#email-details-modal')) {
+            $('#email-details-modal').hide();
+        }
+    });
+
     // Utility function to show messages
     function showMessage(type, message) {
         var $messageDiv = $('<div class="notice notice-' + type + ' is-dismissible"><p>' + message + '</p></div>');
