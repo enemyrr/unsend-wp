@@ -239,15 +239,15 @@
         align-items: flex-start;
         gap: 15px;
     }
-    
+
     .logs-actions {
         flex-wrap: wrap;
     }
-    
+
     .stats-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .stat-number {
         font-size: 24px;
     }
@@ -321,7 +321,7 @@
 }
 
 /* Spacing */
-.unsend-wp-mailer-admin .form-table + .submit {
+.unsend-wp-mailer-admin .form-table+.submit {
     margin-top: 0;
     padding-top: 0;
 }
@@ -343,7 +343,7 @@
         border-color: #3c3c3c;
         color: #e0e0e0;
     }
-    
+
     .stat-card,
     .test-email-form,
     .success-rate {
@@ -351,17 +351,17 @@
         border-color: #3c3c3c;
         color: #e0e0e0;
     }
-    
+
     .logs-table-container {
         border-color: #3c3c3c;
     }
-    
+
     .logs-table-container th {
         background: #2c2c2c;
         border-color: #3c3c3c;
         color: #e0e0e0;
     }
-    
+
     .progress-bar {
         background: #3c3c3c;
         border-color: #555;
@@ -377,7 +377,7 @@
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.4);
+    background-color: rgba(0, 0, 0, 0.4);
 }
 
 .modal-content {
@@ -534,4 +534,4 @@
     .close:focus {
         color: #fff;
     }
-} 
+}

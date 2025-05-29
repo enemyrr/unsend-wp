@@ -33,180 +33,67 @@ if (!function_exists('wp_mail')) {
             return wp_mail_fallback($to, $subject, $message, $headers, $attachments);
         }
         
-        // Compact the input, apply the filters, and extract them back out
-        $atts = apply_filters('wp_mail', compact('to', 'subject', 'message', 'headers', 'attachments'));
+        // Compact the input, apply the filters
+        $atts = compact('to', 'subject', 'message', 'headers', 'attachments');
+        $atts = apply_filters('wp_mail', $atts); // Apply wp_mail filter to the compacted attributes
         
-        if (isset($atts['to'])) {
-            $to = $atts['to'];
-        }
-        
-        if (isset($atts['subject'])) {
-            $subject = $atts['subject'];
-        }
-        
-        if (isset($atts['message'])) {
-            $message = $atts['message'];
-        }
-        
-        if (isset($atts['headers'])) {
-            $headers = $atts['headers'];
-        }
-        
-        if (isset($atts['attachments'])) {
-            $attachments = $atts['attachments'];
-        }
-        
-        if (!is_array($attachments)) {
-            $attachments = explode("\n", str_replace("\r\n", "\n", $attachments));
-        }
-        
-        // Headers
-        $cc = array();
-        $bcc = array();
-        $reply_to = '';
-        
-        // Default from email and name
-        $from_email = get_option('unsend_from_email', get_option('admin_email'));
-        $from_name = get_option('unsend_from_name', get_bloginfo('name'));
-        
-        // Parse headers
-        if (!empty($headers)) {
-            if (!is_array($headers)) {
-                // Explode the headers out, so this function can take both
-                // string headers and an array of headers.
-                $tempheaders = explode("\n", str_replace("\r\n", "\n", $headers));
-            } else {
-                $tempheaders = $headers;
-            }
-            
-            // If it's actually got contents
-            if (!empty($tempheaders)) {
-                // Iterate through the raw headers
-                foreach ((array) $tempheaders as $header) {
-                    if (strpos($header, ':') === false) {
-                        if (false !== stripos($header, 'boundary=')) {
-                            $parts = preg_split('/boundary=/i', trim($header));
-                            $boundary = trim(str_replace(array("'", '"'), '', $parts[1]));
-                        }
-                        continue;
-                    }
-                    // Explode them out
-                    list($name, $content) = explode(':', trim($header), 2);
-                    
-                    // Cleanup crew
-                    $name = trim($name);
-                    $content = trim($content);
-                    
-                    switch (strtolower($name)) {
-                        // Mainly for legacy -- process a From: header if it's there
-                        case 'from':
-                            $bracket_pos = strpos($content, '<');
-                            if ($bracket_pos !== false) {
-                                // Text before the bracketed email is the "From" name.
-                                if ($bracket_pos > 0) {
-                                    $from_name = substr($content, 0, $bracket_pos - 1);
-                                    $from_name = str_replace('"', '', $from_name);
-                                    $from_name = trim($from_name);
-                                }
-                                
-                                $from_email = substr($content, $bracket_pos + 1);
-                                $from_email = str_replace('>', '', $from_email);
-                                $from_email = trim($from_email);
-                            } else {
-                                $from_email = trim($content);
-                            }
-                            break;
-                        case 'content-type':
-                            if (strpos($content, ';') !== false) {
-                                list($type, $charset_content) = explode(';', $content);
-                                $content_type = trim($type);
-                                if (false !== stripos($charset_content, 'charset=')) {
-                                    $charset = trim(str_replace(array('charset=', '"'), '', $charset_content));
-                                } elseif (false !== stripos($charset_content, 'boundary=')) {
-                                    $boundary = trim(str_replace(array('BOUNDARY=', 'boundary=', '"'), '', $charset_content));
-                                    $charset = '';
-                                }
-                            } else {
-                                $content_type = trim($content);
-                            }
-                            break;
-                        case 'cc':
-                            $cc = array_merge((array) $cc, explode(',', $content));
-                            break;
-                        case 'bcc':
-                            $bcc = array_merge((array) $bcc, explode(',', $content));
-                            break;
-                        case 'reply-to':
-                            $reply_to = $content;
-                            break;
-                    }
-                }
-            }
-        }
-        
-        // Sanitize the To field
-        if (!is_array($to)) {
-            $to = explode(',', $to);
-        }
-        
-        // Sanitize recipient emails
-        foreach ($to as $key => $recipient) {
-            $to[$key] = trim($recipient);
-        }
-        
-        // Sanitize CC emails
-        foreach ($cc as $key => $recipient) {
-            $cc[$key] = trim($recipient);
-        }
-        
-        // Sanitize BCC emails
-        foreach ($bcc as $key => $recipient) {
-            $bcc[$key] = trim($recipient);
-        }
-        
-        // Construct the from field
-        $from = $from_name ? "$from_name <$from_email>" : $from_email;
+        // Parse all arguments using the utility method using the potentially filtered $atts
+        $parsed_mail_args = UnsendWPMailer_Util::parse_wp_mail_args($atts);
         
         // Prepare email data for Unsend API
         $email_data = array(
-            'to' => implode(',', $to),
-            'from' => $from,
-            'subject' => $subject,
-            'message' => $message,
+            'to' => implode(',', $parsed_mail_args['to_array']),
+            'from' => $parsed_mail_args['from_header_string'],
+            'subject' => $parsed_mail_args['subject'],
+            'message' => $parsed_mail_args['message'],
+            'content_type' => $parsed_mail_args['content_type'], // Used by UnsendWPMailer_API::prepare_email_data
         );
         
-        if (!empty($cc)) {
-            $email_data['cc'] = $cc;
+        if (!empty($parsed_mail_args['cc_array'])) {
+            $email_data['cc'] = $parsed_mail_args['cc_array'];
         }
         
-        if (!empty($bcc)) {
-            $email_data['bcc'] = $bcc;
+        if (!empty($parsed_mail_args['bcc_array'])) {
+            $email_data['bcc'] = $parsed_mail_args['bcc_array'];
         }
         
-        if (!empty($reply_to)) {
-            $email_data['reply_to'] = $reply_to;
+        if (!empty($parsed_mail_args['reply_to_array'])) {
+            // Unsend API expects a single reply_to string for the 'replyTo' field.
+            $email_data['reply_to'] = implode(',', $parsed_mail_args['reply_to_array']);
         }
         
-        if (!empty($attachments)) {
-            $email_data['attachments'] = $attachments;
+        if (!empty($parsed_mail_args['attachments_array'])) {
+            $email_data['attachments'] = $parsed_mail_args['attachments_array'];
         }
         
+        // Allow filtering of the data before sending to Unsend API
+        // This is where template_id, variables, scheduled_at etc. can be added by other plugins/themes.
+        $email_data = apply_filters('unsend_wp_mail_process', $email_data, $parsed_mail_args);
+
         // Send the email using Unsend API
         $result = UnsendWPMailer_API::get_instance()->send_email($email_data);
         
         if (is_wp_error($result)) {
             // Log the error
-            error_log('Unsend WP Mailer: ' . $result->get_error_message());
+            error_log('Unsend WP Mailer: Error sending email via API - ' . $result->get_error_message() . ' - Data: ' . wp_json_encode($email_data));
             
             // In test mode, fallback to regular WordPress mail
             if (get_option('unsend_test_mode')) {
-                return wp_mail_fallback($to, $subject, $message, $headers, $attachments);
+                // Note: wp_mail_fallback expects original $to, $subject etc. not the ones from $parsed_mail_args
+                // if they were modified by the 'wp_mail' filter. $atts still holds these.
+                return wp_mail_fallback($atts['to'], $atts['subject'], $atts['message'], $atts['headers'], $atts['attachments']);
             }
             
+            // Trigger the wp_mail_failed action hook for compatibility
+            do_action('wp_mail_failed', new WP_Error('unsend_api_error', $result->get_error_message(), $atts));
             return false;
         }
         
-        return $result['success'];
+        // Trigger the wp_mail_succeeded action hook for compatibility
+        // Although Unsend API success (e.g. 200 OK with emailId) means it was accepted, not necessarily delivered.
+        // We will consider API acceptance as success for this hook.
+        do_action('wp_mail_succeeded', $atts);
+        return true; // Unsend API call was successful in the sense that it was accepted
     }
 }
 
